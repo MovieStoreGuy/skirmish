@@ -31,5 +31,5 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 
 func (o *orchestrator) Shutdown() error {
 	o.cancel()
-	return o.ctx.Err()
+	return nil
 }

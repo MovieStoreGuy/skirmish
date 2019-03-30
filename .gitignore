@@ -1,2 +1,5 @@
 # Ignoring folders
 /.idea
+
+# Ignoring binaries
+skirmish
