@@ -1,0 +1,20 @@
+language: go
+
+go:
+  - master
+
+install:
+  - GO111MODULE=on go mod vendor
+
+script:
+  - go test --cover -v ./...
+
+before_deploy:
+  - CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build --ldflags="-s -w" -o skirmish
+deploy:
+  provider: releases
+  api_key:
+    secure: gkEhCIaI8IpaJWPJVzl/ZjLTM72gj7e35Zkg6F9Q6rFLniaqq2gDqJ16E3z4ZM2rN6F2f2WaeoKFgJ9ldKPzcCkqvHeKy3PduTPKO8NSMToHWQLI+x1Zi13qqHlsfLs7QkBIJo4XHRO7CsYW3UB0+bEa3VdJ7XbkeDC9CdZgYEu7Y1LhYobdTX+T2jz776bZza3QtfrCfcDW14LNP/TNe0LekLmu7heaQ5IY+sIGz4Uu/FqIup9kWGK+KMfYNKF/NBsUP5cjLojn/8pUcOBg/NF7pNQIdXewZiYY/Ub/XLhzmHHzLQk4uVZM5UZs0oRjuyztUa0NvMN8s1uw773NmfpI3+VQD7iuD4giSLnNXwILhKCOj6OIC88mRksw9YLn0rNfXjaiG5lSI02TCMxEoAGMso7eI+aML60ZZbowyM5EzucbmHZVGebYfRFD9VgOM8lmcDmqn9qH0+4lYHwFARPi2oGRIzYY4YDmDPPNIT8FkAYDaf966aV2wu9fVGrjVXawoDwsV21O7oH77BWi+58dLYX7ADrsw3/kHi2MtxA69Tyb8RvdI+PVJEDLcnct/UwQnU5dizglm1FLF7t2Es4YmgM0DhVL8hf0og4CT3n3ZWLKbWHSvhvNrrL/vgrSQS+wJZgoDxNs+L88TWMZDI9KzsA+ZAIof1su0tdub1I=
+  file: skirmish
+  on:
+    repo: MovieStoreGuy/skirmish
