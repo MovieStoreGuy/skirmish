@@ -7,10 +7,12 @@ type Plan struct {
 		Project string `json:"project" yaml:"project"`
 		KeyPath string `json:"keyPath" yaml:"keyPath"`
 	} `json:"projects" yaml:"projects" description:"define each Google Cloud Project to operate in"`
-	Exclude struct {
-		Labels  []string `json:"labels" yaml:"labels" description:"define the labels to ignore resource "`
-		Zones   []string `json:"zones" yaml:"zones" description:"define the zones to ignore"`
-		Regions []string `json:"regions" yaml:"regions" description:"define the regions to ignore"`
-	} `json:"exclude" yaml:"exclude" description:"define all the things to exclude on"`
-	Steps []string `json:"steps" yaml:"steps" description:"define the steps to the skirmish"`
+	Steps []struct {
+		Operations []string `json:"operations" yaml:"operations"`
+		Exclude    struct {
+			Labels  []string `json:"labels" yaml:"labels" description:"define the labels to ignore resource "`
+			Zones   []string `json:"zones" yaml:"zones" description:"define the zones to ignore"`
+			Regions []string `json:"regions" yaml:"regions" description:"define the regions to ignore"`
+		} `json:"exclude" yaml:"exclude" description:"define all the things to exclude on"`
+	} `json:"steps" yaml:"steps"`
 }
