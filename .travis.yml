@@ -18,3 +18,4 @@ deploy:
   file: skirmish
   on:
     repo: MovieStoreGuy/skirmish
+    tags: true
