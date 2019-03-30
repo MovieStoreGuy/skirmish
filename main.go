@@ -12,7 +12,9 @@ import (
 	"go.uber.org/zap"
 )
 
-var planPath string
+var (
+	planPath string
+)
 
 func init() {
 	flag.StringVar(&planPath, "plan-path", "", "the path to the plan to run")
@@ -20,15 +22,21 @@ func init() {
 
 func main() {
 	flag.Parse()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	go signal.GlobalHandler().Await(ctx, cancel, syscall.SIGABRT, syscall.SIGTERM, syscall.SIGINT)
+
 	log, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}
 	defer log.Sync()
 	defer signal.GlobalHandler().Finalise()
-	orc := orchestra.NewRunner(log)
+	defer cancel()
+	orc, err := orchestra.NewRunner(log, ctx, cancel)
+	if err != nil {
+		log.Panic("Failed to create new orchestra runner", zap.Error(err))
+	}
 	signal.GlobalHandler().Register(func() {
 		if err := orc.Shutdown(); err != nil {
 			log.Error("Issue with shutting down orchestrator", zap.Error(err))
@@ -41,5 +49,4 @@ func main() {
 	if err = orc.Execute(plan); err != nil {
 		log.Error("Issue executing plan", zap.Error(err))
 	}
-	signal.GlobalHandler().Done()
 }

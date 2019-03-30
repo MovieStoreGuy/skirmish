@@ -23,4 +23,4 @@ USER skirmish:skirmish
 WORKDIR /user/skirmish
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["skirmish"]
+CMD ["skirmish", "--plan-path", "${SKIRMISH_PLAN}"]
