@@ -32,7 +32,7 @@ type orchestrator struct {
 }
 
 // NewRunner returns an orchestrator configured to party
-func NewRunner(logger *zap.Logger, ctx context.Context, cancel context.CancelFunc) (Runner, error) {
+func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logger) (Runner, error) {
 	orc := &orchestrator{
 		ctx:    ctx,
 		cancel: cancel,

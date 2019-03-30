@@ -33,7 +33,7 @@ func main() {
 	defer log.Sync()
 	defer signal.GlobalHandler().Finalise()
 	defer cancel()
-	orc, err := orchestra.NewRunner(log, ctx, cancel)
+	orc, err := orchestra.NewRunner(ctx, cancel, log)
 	if err != nil {
 		log.Panic("Failed to create new orchestra runner", zap.Error(err))
 	}
