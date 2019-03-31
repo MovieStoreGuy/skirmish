@@ -25,7 +25,8 @@ type Step struct {
 		Regions   []string          `json:"regions" yaml:"regions" description:"define the regions to ignore"`
 		Wildcards []string          `json:"wildcards" yaml:"wildcards" description:"If the affected resources doesn't match, see if its name matches the wildcard'"`
 	} `json:"exclude" yaml:"exclude" description:"define all the things to exclude on"`
-	Wait time.Duration `json:"wait" yaml:"wait"`
+	Wait   time.Duration `json:"wait" yaml:"wait"`
+	Sample float32       `json:"sample" yaml:"sample"`
 }
 
 func (p *Plan) Validate() error {
@@ -57,6 +58,12 @@ func LoadPlan(filepath string) (*Plan, error) {
 	var p Plan
 	if err := yaml.Unmarshal(buff, &p); err != nil {
 		return nil, err
+	}
+	for _, step := range p.Steps {
+		if step.Sample == 0.0 {
+			step.Sample = 100.0
+		}
+		step.Sample = step.Sample / 100.0
 	}
 	return &p, (&p).Validate()
 }

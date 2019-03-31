@@ -2,7 +2,9 @@ package minions
 
 import (
 	"context"
+	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/MovieStoreGuy/skirmish/pkg/types"
 	"go.uber.org/zap"
@@ -33,7 +35,12 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 	if err != nil {
 		return
 	}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for _, instance := range instances {
+		if r.Float32() > step.Sample {
+			gik.log.Info("Ignoring instance due to sampling", zap.String("instance", instance.Name))
+			continue
+		}
 		switch mode {
 		case types.DryRun:
 			gik.log.Info("Deleting instances", zap.String("instance", instance.Name), zap.String("mode", mode))
