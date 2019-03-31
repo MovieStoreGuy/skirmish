@@ -3,7 +3,7 @@ package orchestra
 import (
 	"context"
 	"fmt"
-	"sync"
+	"time"
 
 	"github.com/MovieStoreGuy/skirmish/pkg/minions"
 	"github.com/MovieStoreGuy/skirmish/pkg/signal"
@@ -15,28 +15,23 @@ import (
 )
 
 type orchestrator struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
-	logger  *zap.Logger
-	handler *signal.Handler
-	// metadata ensure that only load the data once and use it throughout
-	metadata struct {
-		once    sync.Once
-		regions []string
-		zones   []string
-	}
-	services struct {
-		compute *compute.Service
-	}
-	factory map[string]func(*zap.Logger) minions.Minion
+	ctx      context.Context
+	cancel   context.CancelFunc
+	logger   *zap.Logger
+	handler  *signal.Handler
+	metadata types.Metadata
+	services *types.Services
+	factory  map[string]func(*zap.Logger, *types.Services, *types.Metadata) minions.Minion
 }
 
 // NewRunner returns an orchestrator configured to party
 func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logger) (Runner, error) {
 	orc := &orchestrator{
-		ctx:    ctx,
-		cancel: cancel,
-		logger: logger,
+		ctx:      ctx,
+		cancel:   cancel,
+		logger:   logger,
+		handler:  signal.NewHandler(),
+		services: &types.Services{},
 	}
 	if err := orc.loadServices(); err != nil {
 		return nil, err
@@ -45,37 +40,34 @@ func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logge
 }
 
 func (o *orchestrator) Execute(plan *types.Plan) error {
-	// Gather all resources accessible to orchestrator
-	// Execute each step within the plan at the given mode
 	handler := signal.NewHandler()
-	o.handler = handler
 	// In the event something horrid happens, we need to ensure service is restored
 	// so if any events have been stored then we need to clean up and report back
 	defer handler.Finalise()
 	defer handler.Done()
+	for _, project := range plan.Projects {
+		if err := o.collectMetadata(project); err != nil {
+			return err
+		}
+	}
 	for _, step := range plan.Steps {
 		handler.Finalise()
 		handler = signal.NewHandler()
 		o.handler = handler
 		o.logger.Info("Starting execution", zap.String("name", step.Name), zap.String("description", step.Description))
 		for _, op := range step.Operations {
-			for _, project := range step.Projects {
-				// Should only be slow on first execution
-				if err := o.collectMetadata(project); err != nil {
-					return err
-				}
-			}
 			// Create executor based off steps.
 			gen, exist := o.factory[op]
 			if !exist {
 				return fmt.Errorf("no operation listed as %s", op)
 			}
-			min := gen(o.logger)
+			min := gen(o.logger, o.services, &o.metadata)
 			go min.Do(o.ctx, step, plan.Mode)
 			handler.Register(min.Restore)
 		}
 		handler.Done()
 		o.logger.Info("finished execution", zap.String("name", step.Name), zap.String("description", step.Description))
+		time.Sleep(step.Wait)
 	}
 	return nil
 }
@@ -95,25 +87,25 @@ func (o *orchestrator) loadServices() error {
 	if err != nil {
 		return err
 	}
-	o.services.compute = compute
+	o.services.Compute = compute
 	return nil
 }
 
 func (o *orchestrator) collectMetadata(project string) error {
 	var err error
-	o.metadata.once.Do(func() {
-		err = o.services.compute.Zones.List(project).Pages(o.ctx, func(list *compute.ZoneList) error {
+	o.metadata.Once.Do(func() {
+		err = o.services.Compute.Zones.List(project).Pages(o.ctx, func(list *compute.ZoneList) error {
 			for _, item := range list.Items {
-				o.metadata.zones = append(o.metadata.zones, item.Name)
+				o.metadata.Zones = append(o.metadata.Zones, item.Name)
 			}
 			return nil
 		})
 		if err != nil {
 			return
 		}
-		err = o.services.compute.Regions.List(project).Pages(o.ctx, func(list *compute.RegionList) error {
+		err = o.services.Compute.Regions.List(project).Pages(o.ctx, func(list *compute.RegionList) error {
 			for _, item := range list.Items {
-				o.metadata.regions = append(o.metadata.regions, item.Name)
+				o.metadata.Regions = append(o.metadata.Regions, item.Name)
 			}
 			return nil
 		})

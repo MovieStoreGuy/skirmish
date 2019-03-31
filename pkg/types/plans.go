@@ -3,17 +3,15 @@ package types
 import (
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Plan struct {
-	Mode     string `json:"mode" yaml:"mode" description:"defines how aggressive each step is preformed"`
-	Projects []struct {
-		Project string `json:"project" yaml:"project"`
-		KeyPath string `json:"keyPath" yaml:"keyPath"`
-	} `json:"projects" yaml:"projects" description:"define each Google Cloud Project to operate in"`
-	Steps []Step `json:"steps" yaml:"steps"`
+	Mode     string   `json:"mode" yaml:"mode" description:"defines how aggressive each step is preformed"`
+	Projects []string `json:"projects" yaml:"projects" description:"define each Google Cloud Project to operate in"`
+	Steps    []Step   `json:"steps" yaml:"steps"`
 }
 
 type Step struct {
@@ -22,11 +20,12 @@ type Step struct {
 	Operations  []string `json:"operations" yaml:"operations"`
 	Projects    []string `json:"projects" yaml:"projects"`
 	Exclude     struct {
-		Labels    []string `json:"labels" yaml:"labels" description:"define the labels to ignore resource "`
-		Zones     []string `json:"zones" yaml:"zones" description:"define the zones to ignore"`
-		Regions   []string `json:"regions" yaml:"regions" description:"define the regions to ignore"`
-		Wildcards []string `json:"wildcards" yaml:"wildcards" description:"If the affected resources doesn't match, see if its name matches the wildcard'"`
+		Labels    map[string]string `json:"labels" yaml:"labels" description:"define the labels to ignore resource "`
+		Zones     []string          `json:"zones" yaml:"zones" description:"define the zones to ignore"`
+		Regions   []string          `json:"regions" yaml:"regions" description:"define the regions to ignore"`
+		Wildcards []string          `json:"wildcards" yaml:"wildcards" description:"If the affected resources doesn't match, see if its name matches the wildcard'"`
 	} `json:"exclude" yaml:"exclude" description:"define all the things to exclude on"`
+	Wait time.Duration `json:"wait" yaml:"wait"`
 }
 
 func (p *Plan) Validate() error {
