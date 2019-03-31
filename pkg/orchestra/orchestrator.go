@@ -32,6 +32,9 @@ func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logge
 		logger:   logger,
 		handler:  signal.NewHandler(),
 		services: &types.Services{},
+		factory: map[string]func(*zap.Logger, *types.Services, *types.Metadata) minions.Minion{
+			"instance": minions.NewInstance,
+		},
 	}
 	if err := orc.loadServices(); err != nil {
 		return nil, err
@@ -51,6 +54,7 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 		}
 	}
 	for _, step := range plan.Steps {
+		handler.Done()
 		handler.Finalise()
 		handler = signal.NewHandler()
 		o.handler = handler
@@ -65,7 +69,6 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 			go min.Do(o.ctx, step, plan.Mode)
 			handler.Register(min.Restore)
 		}
-		handler.Done()
 		o.logger.Info("finished execution", zap.String("name", step.Name), zap.String("description", step.Description))
 		time.Sleep(step.Wait)
 	}

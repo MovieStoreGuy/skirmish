@@ -2,14 +2,13 @@ package minions
 
 import (
 	"context"
-	"strings"
 	"sync"
 
 	"github.com/MovieStoreGuy/skirmish/pkg/types"
 	"go.uber.org/zap"
 )
 
-type gcpInstanceKiller struct {
+type instanceDriver struct {
 	lock     sync.Mutex
 	log      *zap.Logger
 	svc      *types.Services
@@ -17,23 +16,15 @@ type gcpInstanceKiller struct {
 	recover  []types.Instance
 }
 
-func (gik *gcpInstanceKiller) filterZones(step *types.Step) []string {
-	zones := []string{}
-	for _, zone := range gik.metadata.Zones {
-		excluded := false
-		for _, exclude := range step.Exclude.Zones {
-			if strings.HasPrefix(zone, exclude) {
-				excluded = true
-			}
-		}
-		if !excluded {
-			zones = append(zones, zone)
-		}
+func NewInstance(log *zap.Logger, svc *types.Services, meta *types.Metadata) Minion {
+	return &instanceDriver{
+		log:      log,
+		svc:      svc,
+		metadata: meta,
 	}
-	return zones
 }
 
-func (gik *gcpInstanceKiller) Do(ctx context.Context, step types.Step, mode string) {
+func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string) {
 	gik.lock.Lock()
 	defer gik.lock.Unlock()
 	gik.log.Info("Gathering instances data", zap.String("mode", mode))
@@ -72,7 +63,7 @@ func (gik *gcpInstanceKiller) Do(ctx context.Context, step types.Step, mode stri
 	}
 }
 
-func (gik *gcpInstanceKiller) Restore() {
+func (gik *instanceDriver) Restore() {
 	for _, instance := range gik.recover {
 		resp, err := gik.svc.Compute.Instances.Start(instance.Project, instance.Zone, instance.Name).Do()
 		if err != nil {
