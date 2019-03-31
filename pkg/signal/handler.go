@@ -6,12 +6,15 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+
+	"go.uber.org/atomic"
 )
 
 // Handler stores all the required information to gracefully shutdown
 type Handler struct {
 	operations []func()
 	shutdown   chan bool
+	done       atomic.Int32
 	lock       sync.Mutex
 }
 
@@ -35,7 +38,10 @@ func (h *Handler) Await(ctx context.Context, cancel context.CancelFunc, sigs ...
 		cancel()
 	case <-ctx.Done():
 	}
-	h.shutdown <- true
+	if h.done.Load() == 0 {
+		h.shutdown <- true
+	}
+	h.done.Store(1)
 	// In the event that someone tries to fire the same event
 	// twice then it will ignore it till
 	signal.Ignore(sigs...)
@@ -48,18 +54,27 @@ func (h *Handler) Finalise() {
 	r := recover()
 	switch r {
 	case nil:
-		<-h.shutdown
+		if h.done.Load() == 0 {
+			h.shutdown <- true
+		}
+		h.done.Store(1)
 	default:
 		fmt.Fprintf(os.Stderr, "Recovered from %v, terminating gracefully\n", r)
 	}
 	for _, op := range h.operations {
 		op()
 	}
+	if h.done.Load() == 1 {
+		close(h.shutdown)
+	}
 }
 
 // Done to be called outside of the
 func (h *Handler) Done() {
-	h.shutdown <- true
+	if h.done.Load() == 0 {
+		h.shutdown <- true
+	}
+	h.done.Store(1)
 }
 
 // NewHandler returns a new configured handler

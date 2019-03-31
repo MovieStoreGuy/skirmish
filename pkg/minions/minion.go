@@ -10,6 +10,7 @@ import (
 // Each minion needs to keep an internal lock to ensure the restore doesn't happen
 // at the same time as the Do
 type Minion interface {
+
 	// Do will execute the minions job against the given step at the correct mode
 	Do(ctx context.Context, step types.Step, mode string)
 

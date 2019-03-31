@@ -2,6 +2,7 @@ package orchestra
 
 import "github.com/MovieStoreGuy/skirmish/pkg/types"
 
+// Runner defines the operation for the orchestration of chaos
 type Runner interface {
 	// Execute will run the game plan
 	Execute(plan *types.Plan) error

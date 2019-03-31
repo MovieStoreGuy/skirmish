@@ -10,6 +10,7 @@ import (
 	"github.com/MovieStoreGuy/skirmish/pkg/types"
 )
 
+// filterInstances will return a list of instances that aren't part of the exclusion list.
 func filterInstances(ctx context.Context, svc *types.Services, metadata *types.Metadata, step *types.Step) ([]types.Instance, error) {
 	instances := []types.Instance{}
 	for _, project := range step.Projects {

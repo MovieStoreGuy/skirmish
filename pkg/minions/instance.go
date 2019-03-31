@@ -16,6 +16,7 @@ type instanceDriver struct {
 	recover  []types.Instance
 }
 
+// NewInstance returns a minion that is configured to inspect instances
 func NewInstance(log *zap.Logger, svc *types.Services, meta *types.Metadata) Minion {
 	return &instanceDriver{
 		log:      log,
@@ -64,6 +65,8 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 }
 
 func (gik *instanceDriver) Restore() {
+	gik.lock.Lock()
+	defer gik.lock.Unlock()
 	for _, instance := range gik.recover {
 		resp, err := gik.svc.Compute.Instances.Start(instance.Project, instance.Zone, instance.Name).Do()
 		if err != nil {

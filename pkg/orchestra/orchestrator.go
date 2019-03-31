@@ -60,7 +60,6 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 		o.handler = handler
 		o.logger.Info("Starting execution", zap.String("name", step.Name), zap.String("description", step.Description))
 		for _, op := range step.Operations {
-			// Create executor based off steps.
 			gen, exist := o.factory[op]
 			if !exist {
 				return fmt.Errorf("no operation listed as %s", op)
@@ -94,6 +93,7 @@ func (o *orchestrator) loadServices() error {
 	return nil
 }
 
+// collectMetadata will return all the zones, region only once to save
 func (o *orchestrator) collectMetadata(project string) error {
 	var err error
 	o.metadata.Once.Do(func() {
