@@ -25,8 +25,19 @@ type Step struct {
 		Regions   []string          `json:"regions" yaml:"regions" description:"define the regions to ignore"`
 		Wildcards []string          `json:"wildcards" yaml:"wildcards" description:"If the affected resources doesn't match, see if its name matches the wildcard'"`
 	} `json:"exclude" yaml:"exclude" description:"define all the things to exclude on"`
-	Wait   time.Duration `json:"wait" yaml:"wait"`
-	Sample float32       `json:"sample" yaml:"sample"`
+	Settings Settings      `json:"settings" yaml:"settings"`
+	Wait     time.Duration `json:"wait" yaml:"wait"`
+	Sample   float32       `json:"sample" yaml:"sample"`
+}
+
+type Settings struct {
+	Network struct {
+		Name string `json:"name" yaml:"name"`
+		Deny []struct {
+			Protocol string   `json:"protocol" yaml:"protocol"`
+			Ports    []string `json:"ports" yaml:"ports"`
+		} `json:"deny" yaml:"deny"`
+	}
 }
 
 func (p *Plan) Validate() error {

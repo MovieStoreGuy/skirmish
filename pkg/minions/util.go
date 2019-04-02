@@ -57,37 +57,6 @@ func filterInstances(ctx context.Context, svc *types.Services, metadata *types.M
 	return instances, nil
 }
 
-func filterNetworks(ctx context.Context, svc *types.Services, meta *types.Metadata, step *types.Step) ([]types.Network, error) {
-	filtered := make([]types.Network, 0, 10)
-	for _, project := range step.Projects {
-		err := svc.Compute.Networks.List(project).Pages(ctx, func(list *compute.NetworkList) error {
-			for _, item := range list.Items {
-				excluded := false
-				for _, wildcard := range step.Exclude.Wildcards {
-					r, err := regexp.Compile(wildcard)
-					if err != nil {
-						continue
-					}
-					if !r.MatchString(item.Name) {
-						excluded = true
-					}
-				}
-				if !excluded {
-					filtered = append(filtered, types.Network{
-						Name: item.Name,
-					})
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-
-	}
-	return filtered, nil
-}
-
 func filterList(originalList, excludeList []string) []string {
 	filtered := make([]string, 0, len(originalList))
 	for _, original := range originalList {
