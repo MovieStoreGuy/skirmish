@@ -57,6 +57,20 @@ func (p *Plan) Validate() error {
 		if len(s.Operations) == 0 {
 			return fmt.Errorf("step %d requires a operations to run", index)
 		}
+		if s.Sample < 0.0 || s.Sample > 100.0 {
+			return fmt.Errorf("step %d has invalid sample, sample is require to be within [0.0, 100.0]", index)
+		}
+		for _, project := range s.Projects {
+			found := false
+			for _, p := range p.Projects {
+				if p == project {
+					found = true
+				}
+			}
+			if !found {
+				return fmt.Errorf("step %d has defined an additional project %s which is missing from global list", index, project)
+			}
+		}
 	}
 	return nil
 }

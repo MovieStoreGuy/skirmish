@@ -34,6 +34,8 @@ func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logge
 		services: &types.Services{},
 		factory: map[string]func(*zap.Logger, *types.Services, *types.Metadata) minions.Minion{
 			"instance": minions.NewInstance,
+			"ingress":  minions.NewNetworkDriver("ingress"),
+			"egress":   minions.NewNetworkDriver("egress"),
 		},
 	}
 	if err := orc.loadServices(); err != nil {
