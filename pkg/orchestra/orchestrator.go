@@ -26,7 +26,7 @@ type orchestrator struct {
 
 // NewRunner returns an orchestrator configured to party
 func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logger) (Runner, error) {
-	orc := &orchestrator{
+	o := &orchestrator{
 		ctx:      ctx,
 		cancel:   cancel,
 		logger:   logger,
@@ -38,10 +38,10 @@ func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logge
 			"egress":   minions.NewNetworkDriver("egress"),
 		},
 	}
-	if err := orc.loadServices(); err != nil {
+	if err := o.loadServices(); err != nil {
 		return nil, err
 	}
-	return orc, nil
+	return o, nil
 }
 
 func (o *orchestrator) Execute(plan *types.Plan) error {
