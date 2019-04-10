@@ -84,11 +84,11 @@ func (o *orchestrator) Shutdown() error {
 }
 
 func (o *orchestrator) loadServices() error {
-	compute, err := compute.NewService(o.ctx)
+	c, err := compute.NewService(o.ctx)
 	if err != nil {
 		return err
 	}
-	o.services.Compute = compute
+	o.services.Compute = c
 	return nil
 }
 
