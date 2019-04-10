@@ -2,6 +2,7 @@ module github.com/MovieStoreGuy/skirmish
 
 require (
 	github.com/golang/mock v1.2.0 // indirect
+	github.com/google/uuid v1.1.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect

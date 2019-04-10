@@ -2,6 +2,7 @@ package minions
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -55,6 +56,33 @@ func filterInstances(ctx context.Context, svc *types.Services, metadata *types.M
 		}
 	}
 	return instances, nil
+}
+
+func buildFirewall(values []types.Deny, name, network, direction, label string) *compute.Firewall {
+	firewall := &compute.Firewall{
+		Direction:  direction,
+		Name:       name,
+		Network:    network,
+		Priority:   1,
+		TargetTags: []string{fmt.Sprintf("%s:wargames", label)},
+		SourceTags: []string{fmt.Sprintf("%s:wargames", label)},
+	}
+	for _, deny := range values {
+		firewall.Denied = append(firewall.Denied, &compute.FirewallDenied{
+			IPProtocol: deny.Protocol,
+			Ports:      deny.Ports,
+		})
+	}
+	return firewall
+}
+
+func nameAppendor() func(...string) string {
+	count := 0
+	return func(prefix ...string) string {
+		s := fmt.Sprintf("%s-%d", strings.Join(prefix, "-"), count)
+		count++
+		return s
+	}
 }
 
 func filterList(originalList, excludeList []string) []string {

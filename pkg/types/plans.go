@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Plan defines the structure of the game day
 type Plan struct {
 	Mode     string   `json:"mode" yaml:"mode" description:"defines how aggressive each step is preformed"`
 	Projects []string `json:"projects" yaml:"projects" description:"define each Google Cloud Project to operate in"`
@@ -31,15 +32,20 @@ type Step struct {
 }
 
 type Settings struct {
-	Network struct {
-		Name string `json:"name" yaml:"name"`
-		Deny []struct {
-			Protocol string   `json:"protocol" yaml:"protocol"`
-			Ports    []string `json:"ports" yaml:"ports"`
-		} `json:"deny" yaml:"deny"`
+	Network []struct {
+		Project string `json:"project" yaml:"project"`
+		Network string `json:"network" yaml:"network"`
+		Deny    []Deny `json:"deny" yaml:"deny"`
 	}
 }
 
+type Deny struct {
+	Protocol string   `json:"protocol" yaml:"protocol"`
+	Ports    []string `json:"ports" yaml:"ports"`
+}
+
+// Validate will ensure that the expected format of the plan
+// is kept straight
 func (p *Plan) Validate() error {
 	switch p.Mode {
 	case DryRun, Repairable, Destruction:
@@ -75,6 +81,7 @@ func (p *Plan) Validate() error {
 	return nil
 }
 
+// LoadPlan will read the filepath and try load it into a valid plan
 func LoadPlan(filepath string) (*Plan, error) {
 	buff, err := ioutil.ReadFile(filepath)
 	if err != nil {

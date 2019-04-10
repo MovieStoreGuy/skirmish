@@ -50,7 +50,6 @@ func (h *Handler) Await(ctx context.Context, cancel context.CancelFunc, sigs ...
 // Finalise will either recover from a panic or await the shutdown signal to run the final operations
 // Should only be used within the main function as a deferred statement
 func (h *Handler) Finalise() {
-	defer close(h.shutdown)
 	r := recover()
 	switch r {
 	case nil:

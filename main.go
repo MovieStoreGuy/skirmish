@@ -44,7 +44,8 @@ func main() {
 	})
 	plan, err := types.LoadPlan(planPath)
 	if err != nil {
-		log.Panic("Invalid plan path defined", zap.Error(err))
+		log.Error("Invalid plan path defined", zap.Error(err))
+		return
 	}
 	if err = orc.Execute(plan); err != nil {
 		log.Error("Issue executing plan", zap.Error(err))

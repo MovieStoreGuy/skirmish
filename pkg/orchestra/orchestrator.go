@@ -11,7 +11,6 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/api/compute/v1"
-	htransport "google.golang.org/api/transport/http"
 )
 
 type orchestrator struct {
@@ -34,17 +33,17 @@ func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logge
 		services: &types.Services{},
 		factory: map[string]func(*zap.Logger, *types.Services, *types.Metadata) minions.Minion{
 			"instance": minions.NewInstance,
-			"ingress":  minions.NewNetworkDriver("ingress"),
-			"egress":   minions.NewNetworkDriver("egress"),
+			"ingress":  minions.NewNetworkDriver("INGRESS"),
+			"egress":   minions.NewNetworkDriver("EGRESS"),
 		},
-	}
-	if err := o.loadServices(); err != nil {
-		return nil, err
 	}
 	return o, nil
 }
 
 func (o *orchestrator) Execute(plan *types.Plan) error {
+	if err := o.loadServices(); err != nil {
+		return err
+	}
 	handler := signal.NewHandler()
 	// In the event something horrid happens, we need to ensure service is restored
 	// so if any events have been stored then we need to clean up and report back
@@ -77,22 +76,28 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 }
 
 func (o *orchestrator) Shutdown() error {
-	o.cancel()
+	if o.cancel != nil {
+		o.cancel()
+	}
 	o.handler.Finalise()
 	return nil
 }
 
 func (o *orchestrator) loadServices() error {
-	hc, _, err := htransport.NewClient(o.ctx)
-	if err != nil {
-		return err
-	}
-	compute, err := compute.New(hc)
+	compute, err := compute.NewService(o.ctx)
 	if err != nil {
 		return err
 	}
 	o.services.Compute = compute
 	return nil
+}
+
+func (o *orchestrator) String() string {
+	loaded := make([]string, 0, len(o.factory))
+	for name := range o.factory {
+		loaded = append(loaded, name)
+	}
+	return fmt.Sprintf("loaded minions:%v", loaded)
 }
 
 // collectMetadata will return all the zones, region only once to save
