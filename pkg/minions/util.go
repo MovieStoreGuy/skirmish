@@ -34,7 +34,7 @@ func filterInstances(ctx context.Context, svc *types.Services, metadata *types.M
 					if len(combined) != 3 {
 						return errors.New("incorrect amount of values to use")
 					}
-					region, zone := combined[0]+combined[1], combined[2]
+					region, zone := combined[0]+"-"+combined[1], combined[2]
 					for _, exclude := range step.Exclude.Zones {
 						if strings.HasPrefix(zone, exclude) {
 							excluded = true

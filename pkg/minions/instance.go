@@ -44,9 +44,9 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 		}
 		switch mode {
 		case types.DryRun:
-			gik.log.Info("Deleting instances", zap.String("instance", instance.Name), zap.String("mode", mode), zap.String("zone", instance.Zone))
+			gik.log.Info("Deleting instances", zap.String("instance", instance.Name), zap.String("mode", mode), zap.String("zone", instance.Zone), zap.String("region", instance.Region))
 		case types.Repairable:
-			resp, err := gik.svc.Compute.Instances.Stop(instance.Project, instance.Zone, instance.Name).Do()
+			resp, err := gik.svc.Compute.Instances.Stop(instance.Project, instance.Region+"-"+instance.Zone, instance.Name).Do()
 			if err != nil {
 				gik.log.Error("Failed to stop instance", zap.String("instance", instance.Name), zap.Error(err))
 				continue
@@ -55,10 +55,10 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 				gik.log.Error("Response error to delete instance", zap.String("instance", instance.Name), zap.Any("response.error", resp.Error))
 				continue
 			}
-			gik.log.Info("Successfully stopped instance", zap.String("instance", instance.Name), zap.String("zone", instance.Zone))
+			gik.log.Info("Successfully stopped instance", zap.String("instance", instance.Name), zap.String("zone", instance.Zone), zap.String("region", instance.Region))
 			gik.recover = append(gik.recover, instance)
 		case types.Destruction:
-			resp, err := gik.svc.Compute.Instances.Delete(instance.Project, instance.Zone, instance.Name).Do()
+			resp, err := gik.svc.Compute.Instances.Delete(instance.Project, instance.Region+"-"+instance.Zone, instance.Name).Do()
 			if err != nil {
 				gik.log.Error("Failed to delete instance", zap.String("instance", instance.Name), zap.Error(err))
 				continue
@@ -67,7 +67,7 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 				gik.log.Error("Response error to delete instance", zap.String("instance", instance.Name), zap.Any("response.error", resp.Error))
 				continue
 			}
-			gik.log.Info("Successfully deleted instance", zap.String("instance", instance.Name), zap.String("zone", instance.Zone))
+			gik.log.Info("Successfully deleted instance", zap.String("instance", instance.Name), zap.String("zone", instance.Zone), zap.String("region", instance.Region))
 		}
 	}
 }
@@ -85,6 +85,6 @@ func (gik *instanceDriver) Restore() {
 			gik.log.Error("Response error to start instance", zap.String("instance", instance.Name), zap.Any("response.error", resp.Error))
 			continue
 		}
-		gik.log.Info("Successfully started instance", zap.String("instance", instance.Name), zap.String("zone", instance.Zone))
+		gik.log.Info("Successfully started instance", zap.String("instance", instance.Name), zap.String("zone", instance.Zone), zap.String("region", instance.Region))
 	}
 }
