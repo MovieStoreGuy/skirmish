@@ -28,7 +28,7 @@ type Step struct {
 	} `json:"exclude" yaml:"exclude" description:"define all the things to exclude on"`
 	Settings Settings      `json:"settings" yaml:"settings"`
 	Wait     time.Duration `json:"wait" yaml:"wait"`
-	Sample   float32       `json:"sample" yaml:"sample"`
+	Sample   float32       `json:"sample" yaml:"sample" description:"Sample is rate [0.0,100.0] that will determine the likely hood of an instance being affected"`
 }
 
 type Settings struct {
@@ -53,6 +53,7 @@ func (p *Plan) Validate() error {
 	default:
 		return fmt.Errorf("unknown mode %s", p.Mode)
 	}
+	// Validate that each step has a valid component
 	for index, s := range p.Steps {
 		if s.Name == "" {
 			return fmt.Errorf("step %d requires a name", index)
