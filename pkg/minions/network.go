@@ -61,7 +61,7 @@ func (nd *networkDriver) Do(ctx context.Context, step types.Step, mode string) {
 				Labels: instance.Labels,
 			}
 			req.Labels[id.String()] = "wargames"
-			resp, err := nd.svc.Compute.Instances.SetLabels(instance.Project, instance.Zone, instance.Name, req).Do()
+			resp, err := nd.svc.Compute.Instances.SetLabels(instance.Project, instance.CompleteZone(), instance.Name, req).Do()
 			if err != nil {
 				nd.log.Error("Unable to apply label changes", zap.Error(err), zap.String("instance", instance.Name))
 				continue

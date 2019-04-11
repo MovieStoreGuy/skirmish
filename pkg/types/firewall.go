@@ -6,6 +6,6 @@ type Firewall struct {
 	Project   string
 	Name      string
 	Id        uint64
-	Instances []Instance
+	Instances []*Instance
 	Labels    map[string]string
 }

@@ -16,7 +16,7 @@ type instanceDriver struct {
 	log      *zap.Logger
 	svc      *types.Services
 	metadata *types.Metadata
-	recover  []types.Instance
+	recover  []*types.Instance
 }
 
 // NewInstance returns a minion that is configured to inspect instances
@@ -46,7 +46,7 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 		case types.DryRun:
 			gik.log.Info("Deleting instances", zap.String("instance", instance.Name), zap.String("mode", mode), zap.String("zone", instance.Zone), zap.String("region", instance.Region))
 		case types.Repairable:
-			resp, err := gik.svc.Compute.Instances.Stop(instance.Project, instance.Region+"-"+instance.Zone, instance.Name).Do()
+			resp, err := gik.svc.Compute.Instances.Stop(instance.Project, instance.CompleteZone(), instance.Name).Do()
 			if err != nil {
 				gik.log.Error("Failed to stop instance", zap.String("instance", instance.Name), zap.Error(err))
 				continue
@@ -58,7 +58,7 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 			gik.log.Info("Successfully stopped instance", zap.String("instance", instance.Name), zap.String("zone", instance.Zone), zap.String("region", instance.Region))
 			gik.recover = append(gik.recover, instance)
 		case types.Destruction:
-			resp, err := gik.svc.Compute.Instances.Delete(instance.Project, instance.Region+"-"+instance.Zone, instance.Name).Do()
+			resp, err := gik.svc.Compute.Instances.Delete(instance.Project, instance.CompleteZone(), instance.Name).Do()
 			if err != nil {
 				gik.log.Error("Failed to delete instance", zap.String("instance", instance.Name), zap.Error(err))
 				continue

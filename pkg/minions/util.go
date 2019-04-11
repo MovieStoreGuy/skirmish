@@ -14,8 +14,8 @@ import (
 )
 
 // filterInstances will return a list of instances that aren't part of the exclusion list.
-func filterInstances(ctx context.Context, svc *types.Services, metadata *types.Metadata, step *types.Step) ([]types.Instance, error) {
-	instances := make([]types.Instance, 0)
+func filterInstances(ctx context.Context, svc *types.Services, metadata *types.Metadata, step *types.Step) ([]*types.Instance, error) {
+	instances := make([]*types.Instance, 0)
 	for _, project := range step.Projects {
 		for _, zone := range metadata.Zones {
 			err := svc.Compute.Instances.List(project, zone).Pages(ctx, func(list *compute.InstanceList) error {
@@ -51,7 +51,7 @@ func filterInstances(ctx context.Context, svc *types.Services, metadata *types.M
 						}
 					}
 					if !excluded {
-						instances = append(instances, types.Instance{
+						instances = append(instances, &types.Instance{
 							Id:      item.Id,
 							Name:    item.Name,
 							Zone:    zone,

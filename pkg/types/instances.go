@@ -10,3 +10,7 @@ type Instance struct {
 	Project string
 	Labels  map[string]string
 }
+
+func (i *Instance) CompleteZone() string {
+	return i.Region + "-" + i.Zone
+}
