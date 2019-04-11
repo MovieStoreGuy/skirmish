@@ -48,6 +48,7 @@ func main() {
 		log.Error("Invalid plan path defined", zap.Error(err))
 		return
 	}
+	log.Info("Successfully validated plan")
 	if err = orc.Execute(plan); err != nil {
 		log.Error("Issue executing plan", zap.Error(err))
 	}
