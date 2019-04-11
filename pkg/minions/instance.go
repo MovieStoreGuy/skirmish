@@ -44,7 +44,7 @@ func (gik *instanceDriver) Do(ctx context.Context, step types.Step, mode string)
 		}
 		switch mode {
 		case types.DryRun:
-			gik.log.Info("Deleting instances", zap.String("instance", instance.Name), zap.String("mode", mode))
+			gik.log.Info("Deleting instances", zap.String("instance", instance.Name), zap.String("mode", mode), zap.String("zone", instance.Zone))
 		case types.Repairable:
 			resp, err := gik.svc.Compute.Instances.Stop(instance.Project, instance.Zone, instance.Name).Do()
 			if err != nil {

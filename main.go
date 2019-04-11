@@ -37,6 +37,7 @@ func main() {
 	if err != nil {
 		log.Panic("Failed to create new orchestra runner", zap.Error(err))
 	}
+	log.Info("Running info", zap.Any("orchestrator", orc))
 	signal.GlobalHandler().Register(func() {
 		if err := orc.Shutdown(); err != nil {
 			log.Error("Issue with shutting down orchestrator", zap.Error(err))
@@ -50,4 +51,5 @@ func main() {
 	if err = orc.Execute(plan); err != nil {
 		log.Error("Issue executing plan", zap.Error(err))
 	}
+	log.Info("finished execute")
 }

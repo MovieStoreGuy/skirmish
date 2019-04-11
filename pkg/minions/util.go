@@ -2,7 +2,9 @@ package minions
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"path"
 	"regexp"
 	"strings"
 
@@ -28,8 +30,18 @@ func filterInstances(ctx context.Context, svc *types.Services, metadata *types.M
 							excluded = true
 						}
 					}
+					combined := strings.Split(path.Base(item.Zone), "-")
+					if len(combined) != 3 {
+						return errors.New("incorrect amount of values to use")
+					}
+					region, zone := combined[0]+combined[1], combined[2]
 					for _, exclude := range step.Exclude.Zones {
-						if strings.HasPrefix(item.Zone, exclude) {
+						if strings.HasPrefix(zone, exclude) {
+							excluded = true
+						}
+					}
+					for _, exclude := range step.Exclude.Regions {
+						if strings.HasPrefix(region, exclude) {
 							excluded = true
 						}
 					}
@@ -42,7 +54,8 @@ func filterInstances(ctx context.Context, svc *types.Services, metadata *types.M
 						instances = append(instances, types.Instance{
 							Id:      item.Id,
 							Name:    item.Name,
-							Zone:    item.Zone,
+							Zone:    zone,
+							Region:  region,
 							Project: project,
 							Labels:  item.Labels,
 						})

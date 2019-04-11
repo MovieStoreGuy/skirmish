@@ -69,7 +69,7 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 			go min.Do(o.ctx, step, plan.Mode)
 			handler.Register(min.Restore)
 		}
-		o.logger.Info("finished execution", zap.String("name", step.Name), zap.String("description", step.Description))
+		o.logger.Info("finished starting all operations", zap.String("name", step.Name), zap.String("description", step.Description))
 		time.Sleep(step.Wait)
 	}
 	return nil
