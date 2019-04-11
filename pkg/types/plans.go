@@ -15,6 +15,7 @@ type Plan struct {
 	Steps    []Step   `json:"steps" yaml:"steps"`
 }
 
+// Step defines what operations to run during the war game
 type Step struct {
 	Name        string        `json:"name" yaml:"name"`
 	Description string        `json:"description" yaml:"description"`
@@ -26,6 +27,7 @@ type Step struct {
 	Sample      float32       `json:"sample" yaml:"sample" description:"Sample is rate [0.0,100.0] that will determine the likely hood of an instance being affected"`
 }
 
+// Exclude defines the values / properties to avoid when running this
 type Exclude struct {
 	Labels    map[string]string `json:"labels" yaml:"labels" description:"define the labels to ignore resource "`
 	Zones     []string          `json:"zones" yaml:"zones" description:"define the zones to ignore"`
@@ -33,6 +35,8 @@ type Exclude struct {
 	Wildcards []string          `json:"wildcards" yaml:"wildcards" description:"If the affected resources doesn't match, see if its name matches the wildcard'"`
 }
 
+// Settings defines all the required info to either give to the minions
+// or ensure that the minions don't use that data
 type Settings struct {
 	Network []struct {
 		Project string `json:"project" yaml:"project"`
@@ -41,6 +45,7 @@ type Settings struct {
 	}
 }
 
+// Deny is allow setting of network controls
 type Deny struct {
 	Protocol string   `json:"protocol" yaml:"protocol"`
 	Ports    []string `json:"ports" yaml:"ports"`

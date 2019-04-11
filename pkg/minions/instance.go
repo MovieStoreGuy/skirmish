@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MovieStoreGuy/skirmish/pkg/types"
+
 	"go.uber.org/zap"
 )
 

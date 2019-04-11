@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"google.golang.org/api/compute/v1"
-
 	"github.com/MovieStoreGuy/skirmish/pkg/types"
+
+	"google.golang.org/api/compute/v1"
 )
 
 // filterInstances will return a list of instances that aren't part of the exclusion list.
