@@ -70,7 +70,9 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 			handler.Register(min.Restore)
 		}
 		o.logger.Info("finished starting all operations", zap.String("name", step.Name), zap.String("description", step.Description))
-		time.Sleep(step.Wait)
+		if plan.Mode != types.DryRun {
+			time.Sleep(step.Wait)
+		}
 	}
 	return nil
 }
