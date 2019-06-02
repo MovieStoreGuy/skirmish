@@ -1,24 +1,34 @@
-package minions
+package google
 
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path"
 	"regexp"
 	"strings"
+	"sync"
+
+	"go.uber.org/zap"
+	"google.golang.org/api/compute/v1"
 
 	"github.com/MovieStoreGuy/skirmish/pkg/types"
-
-	"google.golang.org/api/compute/v1"
 )
 
-// filterInstances will return a list of instances that aren't part of the exclusion list.
-func filterInstances(ctx context.Context, svc *types.Services, metadata *types.Metadata, step *types.Step) ([]*types.Instance, error) {
+type base struct {
+	lock     sync.Mutex
+	logger   *zap.Logger
+	metadata *types.Metadata
+	svc      *compute.Service
+}
+
+func (b *base) loadInstances(ctx context.Context, step *types.Step) ([]*types.Instance, error) {
+	if step == nil {
+		return nil, errors.New("step was nil")
+	}
 	instances := make([]*types.Instance, 0)
 	for _, project := range step.Projects {
-		for _, zone := range metadata.Zones {
-			err := svc.Compute.Instances.List(project, zone).Pages(ctx, func(list *compute.InstanceList) error {
+		for _, zone := range b.metadata.Zones {
+			err := b.svc.Instances.List(project, zone).Pages(ctx, func(list *compute.InstanceList) error {
 				for _, item := range list.Items {
 					excluded := false
 					for _, wildcard := range step.Exclude.Wildcards {
@@ -69,31 +79,4 @@ func filterInstances(ctx context.Context, svc *types.Services, metadata *types.M
 		}
 	}
 	return instances, nil
-}
-
-func buildFirewall(values []types.Deny, name, network, direction, label string) *compute.Firewall {
-	firewall := &compute.Firewall{
-		Direction:  direction,
-		Name:       name,
-		Network:    network,
-		Priority:   1,
-		TargetTags: []string{fmt.Sprintf("%s:wargames", label)},
-		SourceTags: []string{fmt.Sprintf("%s:wargames", label)},
-	}
-	for _, deny := range values {
-		firewall.Denied = append(firewall.Denied, &compute.FirewallDenied{
-			IPProtocol: deny.Protocol,
-			Ports:      deny.Ports,
-		})
-	}
-	return firewall
-}
-
-func nameAppendor() func(...string) string {
-	count := 0
-	return func(prefix ...string) string {
-		s := fmt.Sprintf("%s-%d", strings.Join(prefix, "-"), count)
-		count++
-		return s
-	}
 }
