@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/compute/v1"
 
+	"github.com/MovieStoreGuy/skirmish/pkg/cloud"
 	"github.com/MovieStoreGuy/skirmish/pkg/minions"
 	"github.com/MovieStoreGuy/skirmish/pkg/types"
 )
@@ -16,6 +17,12 @@ type provider struct {
 	svc      *compute.Service
 	metadata types.Metadata
 	logger   *zap.Logger
+}
+
+func NewProvider(logger *zap.Logger) cloud.Provider {
+	return &provider{
+		logger: logger,
+	}
 }
 
 func (p *provider) Initialise(ctx context.Context, conf *types.Config) error {
@@ -30,6 +37,7 @@ func (p *provider) Initialise(ctx context.Context, conf *types.Config) error {
 	var once sync.Once
 	for _, project := range conf.Google.Projects {
 		// Optimisation in order to preload all regions and zones within Google
+		// since the api doesn't have an auto-generated list.
 		once.Do(func() {
 			err = p.svc.Zones.List(project).Pages(ctx, func(list *compute.ZoneList) error {
 				for _, item := range list.Items {
@@ -55,7 +63,41 @@ func (p *provider) Initialise(ctx context.Context, conf *types.Config) error {
 }
 
 func (p *provider) LoadMinionsFactory() (map[string]func() minions.Minion, error) {
-	factory := map[string]func() minions.Minion{}
-
+	if p.svc == nil {
+		return nil, errors.New("provider not initialised")
+	}
+	factory := map[string]func() minions.Minion{
+		"instance": func() minions.Minion {
+			return &instancer{
+				base: &base{
+					logger:   p.logger,
+					metadata: &p.metadata,
+				},
+				recover: make([]*types.Instance, 0),
+			}
+		},
+		"ingress": func() minions.Minion {
+			return &networker{
+				base: &base{
+					logger:   p.logger,
+					metadata: &p.metadata,
+				},
+				flow: "INGRESS",
+			}
+		},
+		"egress": func() minions.Minion {
+			return &networker{
+				base: &base{
+					logger:   p.logger,
+					metadata: &p.metadata,
+				},
+				flow: "EGRESS",
+			}
+		},
+	}
 	return factory, nil
+}
+
+func (p *provider) String() string {
+	return "Google Cloud Provider"
 }

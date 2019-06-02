@@ -1,6 +1,6 @@
 # Ignoring folders
 /.idea
-vendor
+/vendor
 
 # Ignoring binaries
 skirmish

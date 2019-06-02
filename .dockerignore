@@ -1,6 +1,7 @@
 # Ignoring folders
 /.idea
 /.git
+/vendor
 
 
 # Ignoring binaries

@@ -121,3 +121,32 @@ func (net *networker) Do(ctx context.Context, step types.Step, mode string) {
 		}
 	}
 }
+
+func (net *networker) Restore() {
+	net.lock.Lock()
+	defer net.lock.Unlock()
+	for project, firewall := range net.firewalls {
+		for _, instance := range firewall.Instances {
+			resp, err := net.svc.Instances.SetLabels(instance.Project, instance.Zone, instance.Name, &compute.InstancesSetLabelsRequest{
+				Labels: instance.Labels,
+			}).Do()
+			if err != nil {
+				net.logger.Error("Failed to reset labels", zap.Error(err), zap.String("instance", instance.Name), zap.String("project", instance.Project))
+				continue
+			}
+			if resp.Error != nil {
+				net.logger.Error("Response failed to reset labels", zap.Any("resp.error", resp.Error), zap.String("instance", instance.Name), zap.String("project", instance.Project))
+			}
+		}
+		resp, err := net.svc.Firewalls.Delete(project, firewall.Name).Do()
+		if err != nil {
+			net.logger.Error("Failed to remove firewall", zap.Error(err), zap.String("project", project), zap.String("firewall", firewall.Name))
+			continue
+		}
+		if resp.Error != nil {
+			net.logger.Error("Response failed to delete firewall", zap.Any("resp.error", resp.Error), zap.String("project", project), zap.String("firewall", firewall.Name))
+			continue
+		}
+		net.logger.Info("Removed firewall", zap.String("project", project), zap.String("firewall", firewall.Name))
+	}
+}

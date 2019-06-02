@@ -1,4 +1,4 @@
-FROM golang:1.11.5-alpine AS Builder
+FROM golang:1.12.5-alpine AS Builder
 
 WORKDIR /go/src/github.com/MovieStoreGuy/skirmish
 COPY . .
@@ -8,7 +8,7 @@ RUN set -x && \
     apk --no-cache add git && \
     go build -ldflags="-s -w" -o /skirmish
 
-FROM alpine:3.8
+FROM alpine:3.9
 
 LABEL Author='Sean (MovieStoreGuy) Marciniak'
 
