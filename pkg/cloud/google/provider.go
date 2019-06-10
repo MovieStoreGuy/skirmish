@@ -62,40 +62,50 @@ func (p *provider) Initialise(ctx context.Context, conf *types.Config) error {
 	return err
 }
 
-func (p *provider) LoadMinionsFactory() (map[string]func() minions.Minion, error) {
+func (p *provider) LoadMinionsFactory() (cloud.Factory, error) {
 	if p.svc == nil {
 		return nil, errors.New("provider not initialised")
 	}
-	factory := map[string]func() minions.Minion{
-		"instance": func() minions.Minion {
-			return &instancer{
-				base: &base{
-					logger:   p.logger,
-					metadata: &p.metadata,
-				},
-				recover: make([]*types.Instance, 0),
-			}
-		},
-		"ingress": func() minions.Minion {
-			return &networker{
-				base: &base{
-					logger:   p.logger,
-					metadata: &p.metadata,
-				},
-				flow: "INGRESS",
-			}
-		},
-		"egress": func() minions.Minion {
-			return &networker{
-				base: &base{
-					logger:   p.logger,
-					metadata: &p.metadata,
-				},
-				flow: "EGRESS",
-			}
-		},
+	factory := make(cloud.Factory, 0)
+	err := factory.RegisterMinion("instance", func() minions.Minion {
+		return &instancer{
+			base: &base{
+				logger:   p.logger,
+				metadata: &p.metadata,
+				svc:      p.svc,
+			},
+			recover: make([]*types.Instance, 0),
+		}
+	})
+	if err != nil {
+		return nil, err
 	}
-	return factory, nil
+	err = factory.RegisterMinion("ingress", func() minions.Minion {
+		return &networker{
+			base: &base{
+				logger:   p.logger,
+				metadata: &p.metadata,
+				svc:      p.svc,
+			},
+			firewalls: make(map[string]*types.Firewall, 0),
+			flow:      "INGRESS",
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = factory.RegisterMinion("egress", func() minions.Minion {
+		return &networker{
+			base: &base{
+				logger:   p.logger,
+				metadata: &p.metadata,
+				svc:      p.svc,
+			},
+			firewalls: make(map[string]*types.Firewall, 0),
+			flow:      "EGRESS",
+		}
+	})
+	return factory, err
 }
 
 func (p *provider) String() string {
