@@ -10,14 +10,15 @@ import (
 
 // Plan defines the structure of the game day
 type Plan struct {
-	Mode     string   `json:"mode" yaml:"mode" description:"defines how aggressive each step is preformed"`
-	Projects []string `json:"projects" yaml:"projects" description:"define each Google Cloud Project to operate in"`
-	Steps    []Step   `json:"steps" yaml:"steps"`
+	Mode      string               `json:"mode" yaml:"mode" description:"defines how aggressive each step is preformed"`
+	Providers []ProviderDefinition `json:"providers" yaml:"providers"`
+	Steps     []Step               `json:"steps" yaml:"steps"`
 }
 
 // Step defines what operations to run during the war game
 type Step struct {
 	Name        string        `json:"name" yaml:"name"`
+	Provider    string        `json:"provider" yaml:"provider"`
 	Description string        `json:"description" yaml:"description"`
 	Operations  []string      `json:"operations" yaml:"operations" description:"It is the name of the loaded minions in the orchestrator"`
 	Projects    []string      `json:"projects" yaml:"projects"`
@@ -43,6 +44,11 @@ type Settings struct {
 		Network string `json:"network" yaml:"network"`
 		Deny    []Deny `json:"deny" yaml:"deny"`
 	}
+}
+
+type ProviderDefinition struct {
+	Name     string   `json:"name" yaml:"name"`
+	Projects []string `json:"projects" yaml:"projects" description:"define each Google Cloud Project to operate in"`
 }
 
 // Deny is allow setting of network controls
@@ -73,17 +79,7 @@ func (p *Plan) validate() error {
 		if s.Sample < 0.0 || s.Sample > 100.0 {
 			return fmt.Errorf("step %d has invalid sample, sample is require to be within [0.0, 100.0]", index)
 		}
-		for _, project := range s.Projects {
-			found := false
-			for _, p := range p.Projects {
-				if p == project {
-					found = true
-				}
-			}
-			if !found {
-				return fmt.Errorf("step %d has defined an additional project %s which is missing from global list", index, project)
-			}
-		}
+
 	}
 	return nil
 }

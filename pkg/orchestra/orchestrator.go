@@ -30,14 +30,28 @@ func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logge
 		handler:   signal.NewHandler(),
 		providers: make(map[string]func(*zap.Logger) cloud.Provider, 0),
 	}
-	o.providers["google"] = google.NewProvider
 	return o, nil
 }
 
-func (o *orchestrator) Execute(plan *types.Plan) error {
-	if err := o.loadServices(); err != nil {
-		return err
+func (o *orchestrator) Initialise(plan *types.Plan) error {
+	choices := map[string]func(*zap.Logger) cloud.Provider{
+		"google": google.NewProvider,
 	}
+	for _, c := range plan.Providers {
+		if op, exist := choices[c.Name]; exist {
+			o.providers[c.Name] = op
+		} else {
+			names := make([]string, 0)
+			for name := range choices {
+				names = append(names, name)
+			}
+			return fmt.Errorf("unknown provider %s, list is %v", c.Name, names)
+		}
+	}
+	return nil
+}
+
+func (o *orchestrator) Execute(plan *types.Plan) error {
 	handler := signal.NewHandler()
 	// In the event something horrid happens, we need to ensure service is restored
 	// so if any events have been stored then we need to clean up and report back
