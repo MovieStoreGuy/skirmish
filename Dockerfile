@@ -10,7 +10,10 @@ RUN set -x && \
 
 FROM alpine:3.9
 
-LABEL Author='Sean (MovieStoreGuy) Marciniak'
+LABEL Author='Sean (MovieStoreGuy) Marciniak' \
+      LICENSE='MIT' \ 
+      Application='Skirmish' \ 
+      ProjectURL='https://github.com/MovieStoreGuy/skirmish'
 
 COPY --from=Builder /skirmish /usr/bin/skirmish
 
