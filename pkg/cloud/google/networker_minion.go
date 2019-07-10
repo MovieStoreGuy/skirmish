@@ -92,7 +92,7 @@ func (net *networker) Do(ctx context.Context, step types.Step, mode string) {
 			firewall.Instances = append(firewall.Instances, instance)
 			fallthrough
 		case types.DryRun:
-			net.logger.Info("Applying network rules against", zap.String("instance", instance.Name), zap.String("flow", nd.flow))
+			net.logger.Info("Applying network rules against", zap.String("instance", instance.Name), zap.String("flow", net.flow))
 		}
 	}
 	gen := nameAppendor()
