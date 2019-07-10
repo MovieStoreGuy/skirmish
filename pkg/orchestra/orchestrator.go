@@ -18,7 +18,7 @@ type orchestrator struct {
 	cancel    context.CancelFunc
 	logger    *zap.Logger
 	handler   *signal.Handler
-	providers map[string]func(*zap.Logger) cloud.Provider
+	providers map[string]cloud.Provider
 }
 
 // NewRunner returns an orchestrator that has all the providers registered
@@ -28,18 +28,28 @@ func NewRunner(ctx context.Context, cancel context.CancelFunc, logger *zap.Logge
 		cancel:    cancel,
 		logger:    logger,
 		handler:   signal.NewHandler(),
-		providers: make(map[string]func(*zap.Logger) cloud.Provider, 0),
+		providers: make(map[string]cloud.Provider, 0),
 	}
 	return o, nil
 }
 
-func (o *orchestrator) Initialise(plan *types.Plan) error {
+func (o *orchestrator) Initialise(ctx context.Context, plan *types.Plan) error {
 	choices := map[string]func(*zap.Logger) cloud.Provider{
 		"google": google.NewProvider,
 	}
 	for _, c := range plan.Providers {
 		if op, exist := choices[c.Name]; exist {
-			o.providers[c.Name] = op
+			if _, init := o.providers[c.Name]; init {
+				// Provider has already been successfully created
+				// No need to create a new provider again
+				continue
+			}
+			provider := op(o.logger)
+			// TODO(Sean Marciniak): Update plan definition to include config object
+			if err := provider.Initialise(ctx, &types.Config{}); err != nil {
+				return err
+			}
+			o.providers[c.Name] = provider
 		} else {
 			names := make([]string, 0)
 			for name := range choices {
@@ -64,11 +74,18 @@ func (o *orchestrator) Execute(plan *types.Plan) error {
 		o.handler = handler
 		o.logger.Info("Starting execution", zap.String("name", step.Name), zap.String("description", step.Description))
 		for _, op := range step.Operations {
-			gen, exist := o.factory[op]
+			provider, exist := o.providers[step.Provider]
 			if !exist {
-				return fmt.Errorf("no operation listed as %s", op)
+				return fmt.Errorf("no provider initialised called %s", step.Provider)
 			}
-			min := gen(o.logger, o.services, &o.metadata)
+			factory, err := provider.LoadMinionsFactory()
+			if err != nil {
+				return err
+			}
+			min, err := factory.CreateMinion(op)
+			if err != nil{
+				return err
+			}
 			go min.Do(o.ctx, step, plan.Mode)
 			handler.Register(min.Restore)
 		}
